@@ -1,3 +1,4 @@
+# app.py
 from __future__ import annotations
 import io
 import os
@@ -7,7 +8,7 @@ from flask import Flask, render_template, request, jsonify, send_file, send_from
 from PIL import Image
 import numpy as np
 
-from dicom_utils import load_dicom
+from dicom_utils import load_dicom, load_dicom_images
 
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_DIR = BASE_DIR / "cache"
@@ -73,8 +74,9 @@ def preview(filename):
         abort(404)
     
     try:
-        meta, frames = load_dicom(path)
-        print(f"Loaded DICOM: {len(frames)} frames")
+        from dicom_utils import load_dicom_images
+        frames = load_dicom_images(path)  # ← 改为只调用 load_dicom_images，不解读元数据
+        print(f"Loaded DICOM images only: {len(frames)} frames")
         
         if not frames:
             print("No frames found in DICOM file")

@@ -1,3 +1,4 @@
+/* static/js/main.js */
 /* eslint-env browser */
 
 const thumbStrip = document.getElementById("thumb-strip");
