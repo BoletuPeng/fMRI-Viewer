@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;700;900&family=Noto+Sans:wght@400;500;700;900" />
+  <title>MRI Photo Manager</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script defer src="/static/js/main.js"></script>
+  <style>
+    /* Selected thumbnail border */
+    .thumb-selected{outline:2px solid #4f9cff;outline-offset:2px}
+  </style>
+</head>
+<body class="bg-[#141a1f] min-h-screen font-[Inter,_'Noto_Sans',sans-serif]">
+  <div class="flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-[#2b3640] px-10 py-3 text-white">
+      <div class="flex items-center gap-4">
+        <div class="size-4"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M47.24 24 24 47.24.76 24 24 .76 47.24 24ZM12.24 21h23.52L24 9.24 12.24 21Z"/></svg></div>
+        <h2 class="text-lg font-bold tracking-tight">MRI Photo Manager</h2>
+      </div>
+      <!-- Import buttons -->
+      <div class="flex gap-3">
+        <label class="relative h-10 cursor-pointer rounded-full bg-[#2b3640] px-4 text-sm font-bold leading-10 text-white">
+          Import File
+          <input id="file-input" type="file" accept=".dcm,.DCM" multiple class="absolute inset-0 opacity-0 cursor-pointer" />
+        </label>
+        <label class="relative h-10 cursor-pointer rounded-full bg-[#2b3640] px-4 text-sm font-bold leading-10 text-white">
+          Import Folder
+          <input id="folder-input" type="file" accept=".dcm,.DCM" multiple webkitdirectory directory class="absolute inset-0 opacity-0 cursor-pointer" />
+        </label>
+      </div>
+    </header>
+
+    <!-- Main region -->
+    <div class="flex flex-1 gap-6 p-6 relative overflow-hidden">
+      <!-- Metadata table (left) -->
+      <div class="flex-1 overflow-y-auto">
+        <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
+          <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
+            <tr><th class="w-60 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
+          </thead>
+          <tbody id="meta-body" class="text-white divide-y divide-[#3d4d5c]"></tbody>
+        </table>
+      </div>
+
+      <!-- Main preview (right) -->
+      <div id="preview" class="w-[480px] flex items-center justify-center rounded-xl bg-[#1f272e]">
+        <img id="preview-img" src="/static/images/placeholder.png" class="max-h-full max-w-full object-contain" />
+      </div>
+
+      <!-- Diagram placeholder (bottom‑right corner) -->
+      <img src="/static/images/placeholder.png" class="absolute bottom-6 right-6 w-36 opacity-60 pointer-events-none" alt="diagram placeholder" />
+    </div>
+
+    <!-- Bottom thumbnail strip -->
+    <div id="thumb-strip-wrapper" class="border-t border-[#2b3640]">
+      <div id="thumb-strip" class="flex gap-2 overflow-x-auto px-6 py-3" style="scrollbar-width:thin;"></div>
+    </div>
+  </div>
+</body>
+</html>
