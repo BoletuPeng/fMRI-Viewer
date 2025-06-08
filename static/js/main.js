@@ -3,7 +3,8 @@
 
 const thumbStrip = document.getElementById("thumb-strip");
 const previewImg = document.getElementById("preview-img");
-const metaBody   = document.getElementById("meta-body");
+const metaBodyLeft = document.getElementById("meta-body-left");
+const metaBodyRight = document.getElementById("meta-body-right");
 
 let currentThumb = null; // track selected thumbnail div
 
@@ -97,7 +98,8 @@ async function removeFile(name, wrapper) {
   wrapper.remove();
   if (currentThumb === wrapper) {
     previewImg.src = "/static/images/placeholder.png";
-    metaBody.innerHTML = "";
+    metaBodyLeft.innerHTML = "";
+    metaBodyRight.innerHTML = "";
     currentThumb = null;
   }
 }
@@ -107,11 +109,25 @@ async function loadMetadata(name) {
   try {
     const response = await fetch(`/api/cache/metadata/${encodeURIComponent(name)}`);
     const meta = await response.json();
-    metaBody.innerHTML = "";
-    Object.entries(meta).forEach(([k,v]) => {
+    metaBodyLeft.innerHTML = "";
+    metaBodyRight.innerHTML = "";
+    
+    // 将元数据分成两列
+    const entries = Object.entries(meta);
+    const midPoint = Math.ceil(entries.length / 2);
+    
+    // 填充左列
+    entries.slice(0, midPoint).forEach(([k,v]) => {
       const row = document.createElement("tr");
       row.innerHTML = `<td class="px-4 py-2 text-[#9daebe]">${k}</td><td class="px-4 py-2 text-white">${v}</td>`;
-      metaBody.appendChild(row);
+      metaBodyLeft.appendChild(row);
+    });
+    
+    // 填充右列
+    entries.slice(midPoint).forEach(([k,v]) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td class="px-4 py-2 text-[#9daebe]">${k}</td><td class="px-4 py-2 text-white">${v}</td>`;
+      metaBodyRight.appendChild(row);
     });
   } catch (error) {
     console.error("Error loading metadata:", error);

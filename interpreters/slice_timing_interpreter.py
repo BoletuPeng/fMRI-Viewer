@@ -49,8 +49,8 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
         if not acquisition_order:
             return {"Slice Timing Available": "Error", "Slice Timing Error": "Failed to parse timing data"}
         
-        # 分析采集模式
-        pattern_info = _analyze_acquisition_pattern(acquisition_order)
+        # 将采集顺序转换为类MATLAB表达式
+        matlab_expression = _convert_to_matlab_expression(acquisition_order)
         
         # 获取额外的序列信息
         image_type = str(context.get("image_type", "")).upper()
@@ -61,18 +61,13 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
             "Slice Timing Available": "Yes",
             "Slice Timing Source": "Siemens MosaicRefAcqTimes (0019,1029)",
             "Number of Slices": str(len(acquisition_order)),
-            "Acquisition Order (first 8)": _format_order_preview(acquisition_order),
-            "Acquisition Pattern": pattern_info["pattern_name"],
+            "Acquisition Order": matlab_expression,
             "Image Type": "Mosaic" if is_mosaic else "Standard",
         }
         
-        # 添加额外的模式信息
-        if pattern_info.get("details"):
-            results["Pattern Details"] = pattern_info["details"]
-        
         # 如果有timing范围信息
-        if "timing_range" in pattern_info:
-            min_t, max_t = pattern_info["timing_range"]
+        if '_last_timing_range' in globals():
+            min_t, max_t = _last_timing_range
             results["Timing Range (ms)"] = f"{min_t:.1f} - {max_t:.1f}"
             
             # 计算slice间隔（如果有TR信息）
@@ -192,126 +187,86 @@ def _extract_acquisition_order(timing_info: Any) -> Optional[List[int]]:
         return None
 
 
-def _analyze_acquisition_pattern(order: List[int]) -> Dict[str, Any]:
+def _convert_to_matlab_expression(order: List[int]) -> str:
     """
-    分析采集模式（增强版）
+    将采集顺序转换为类MATLAB表达式
     
+    参数:
+        order: 采集顺序列表
+        
     返回:
-        Dict包含:
-        - pattern_name: 模式名称
-        - details: 详细描述
-        - timing_range: timing范围（如果可用）
-        - is_multiband: 是否为多带采集
+        str: 类MATLAB表达式，如 "[31:-2:1,32:-2:2]" 或原始列表
     """
-    n = len(order)
-    result = {"pattern_name": "Unknown"}
+    if not order:
+        return "[]"
     
-    # 添加timing范围（如果可用）
-    global _last_timing_range
-    if '_last_timing_range' in globals():
-        result["timing_range"] = _last_timing_range
-    
-    # 检查是否为多带采集（同时采集的slice具有相同的timing）
-    timing_counts = {}
-    if '_last_timing_range' in globals():
-        # 需要原始timing数组来检查多带
-        result["is_multiband"] = False  # 暂时设为False，需要原始timing数据
-    
-    # 分析前半部分和后半部分
-    first_half = order[:n//2]
-    second_half = order[n//2:]
-    
-    # 检查是否为交替采集（奇偶分离）
-    all_odd_first = all(x % 2 == 1 for x in first_half)
-    all_even_first = all(x % 2 == 0 for x in first_half)
-    all_odd_second = all(x % 2 == 1 for x in second_half)
-    all_even_second = all(x % 2 == 0 for x in second_half)
-    
-    if all_odd_first and all_even_second:
-        result["pattern_name"] = "Interleaved (Odd-Even)"
-        result["details"] = "Odd slices first (1,3,5...), then even slices (2,4,6...)"
-    elif all_even_first and all_odd_second:
-        result["pattern_name"] = "Interleaved (Even-Odd)"
-        result["details"] = "Even slices first (2,4,6...), then odd slices (1,3,5...)"
-    else:
-        # 检查是否为顺序采集
-        if order == list(range(1, n + 1)):
-            result["pattern_name"] = "Sequential (Ascending)"
-            result["details"] = "Slices acquired in ascending order (1→N)"
-        elif order == list(range(n, 0, -1)):
-            result["pattern_name"] = "Sequential (Descending)"
-            result["details"] = "Slices acquired in descending order (N→1)"
-        else:
-            # 检查是否为中心向外或外向中心
-            if _is_center_out_pattern(order):
-                result["pattern_name"] = "Center-Out"
-                result["details"] = "Acquisition from center slices to edge slices"
-            elif _is_out_center_pattern(order):
-                result["pattern_name"] = "Out-Center"
-                result["details"] = "Acquisition from edge slices to center slices"
-            else:
-                # 检查是否为多带交错
-                if _is_multiband_pattern(order):
-                    result["pattern_name"] = "Multi-band/SMS"
-                    result["details"] = "Simultaneous multi-slice acquisition detected"
-                    result["is_multiband"] = True
-                else:
-                    result["pattern_name"] = "Custom/Non-standard"
-                    result["details"] = f"Non-standard pattern. First few: {order[:5]}..."
-    
-    return result
-
-
-def _is_center_out_pattern(order: List[int]) -> bool:
-    """检查是否为中心向外的采集模式"""
-    n = len(order)
-    center = n // 2
-    
-    # 检查前几个采集的slice是否接近中心
-    first_few = order[:min(4, n//4)]
-    distances = [abs(x - center) for x in first_few]
-    
-    # 如果前几个slice都接近中心，可能是center-out
-    return all(d < n//4 for d in distances)
-
-
-def _is_out_center_pattern(order: List[int]) -> bool:
-    """检查是否为外向中心的采集模式"""
-    n = len(order)
-    
-    # 检查前几个采集的slice是否在边缘
-    first_few = order[:min(4, n//4)]
-    
-    # 如果前几个slice都在边缘（接近1或n），可能是out-center
-    return all(x <= 2 or x >= n-1 for x in first_few)
-
-
-def _is_multiband_pattern(order: List[int]) -> bool:
-    """
-    检查是否可能为多带模式
-    多带采集的特征是某些slice会同时采集
-    """
-    n = len(order)
-    
-    # 简单的启发式方法：检查是否有规律的跳跃模式
-    # 例如：[1,5,9,13, 2,6,10,14, 3,7,11,15, 4,8,12,16] 对于MB=4
-    if n >= 8:
-        # 计算前几个元素之间的间隔
-        gaps = [order[i+1] - order[i] for i in range(min(4, len(order)-1))]
-        # 如果间隔都相等且大于1，可能是多带
-        if len(set(gaps)) == 1 and gaps[0] > 1:
-            return True
-    
-    return False
-
-
-def _format_order_preview(order: List[int], preview_length: int = 8) -> str:
-    """格式化采集顺序预览"""
-    if len(order) <= preview_length:
+    if len(order) < 4:
+        # 少于4个元素，直接返回原始列表
         return str(order)
-    else:
-        preview = order[:preview_length]
-        return f"{preview}... (total: {len(order)} slices)"
+    
+    # 存储找到的等差数列段
+    segments = []
+    i = 0
+    
+    while i < len(order):
+        # 尝试从当前位置找等差数列
+        found = False
+        
+        # 如果剩余元素少于4个，直接添加剩余元素
+        if i + 3 >= len(order):
+            for j in range(i, len(order)):
+                segments.append(str(order[j]))
+            break
+        
+        # 从当前位置开始，尝试找到等差数列
+        for start in range(i, min(i + 1, len(order) - 3)):
+            if start + 3 >= len(order):
+                break
+                
+            # 检查从start开始的四个元素是否构成等差数列
+            diff1 = order[start + 1] - order[start]
+            diff2 = order[start + 2] - order[start + 1]
+            diff3 = order[start + 3] - order[start + 2]
+            
+            if diff1 == diff2 == diff3 and diff1 != 0:
+                # 找到等差数列，继续扩展
+                step = diff1
+                end_idx = start + 3
+                
+                # 继续查找符合等差数列的元素
+                while end_idx + 1 < len(order):
+                    expected_next = order[end_idx] + step
+                    if order[end_idx + 1] == expected_next:
+                        end_idx += 1
+                    else:
+                        break
+                
+                # 生成MATLAB表达式
+                if step == 1:
+                    # 步长为1，可以简化为 start:end
+                    segments.append(f"{order[start]}:{order[end_idx]}")
+                elif step == -1:
+                    # 步长为-1，简化为 start:-1:end
+                    segments.append(f"{order[start]}:{order[end_idx]}")
+                else:
+                    # 一般情况 start:step:end
+                    segments.append(f"{order[start]}:{step}:{order[end_idx]}")
+                
+                i = end_idx + 1
+                found = True
+                break
+        
+        if not found:
+            # 当前位置无法形成等差数列，添加单个元素
+            segments.append(str(order[i]))
+            i += 1
+    
+    # 如果没有找到任何等差数列（所有都是单个元素），返回完整列表
+    if all(seg.isdigit() or (seg.startswith('-') and seg[1:].isdigit()) for seg in segments):
+        return str(order)
+    
+    # 返回MATLAB风格的表达式
+    return "[" + ",".join(segments) + "]"
 
 
 # 清理全局变量

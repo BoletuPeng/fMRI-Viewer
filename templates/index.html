@@ -37,14 +37,25 @@
 
     <!-- Main region -->
     <div class="flex flex-1 gap-6 p-6 relative overflow-hidden">
-      <!-- Metadata table (left) -->
+      <!-- Metadata tables (left) - Two column layout -->
       <div class="flex-1 overflow-y-auto">
-        <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
-          <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
-            <tr><th class="w-60 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
-          </thead>
-          <tbody id="meta-body" class="text-white divide-y divide-[#3d4d5c]"></tbody>
-        </table>
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Left column table -->
+          <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
+            <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
+              <tr><th class="w-40 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
+            </thead>
+            <tbody id="meta-body-left" class="text-white divide-y divide-[#3d4d5c]"></tbody>
+          </table>
+          
+          <!-- Right column table -->
+          <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
+            <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
+              <tr><th class="w-40 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
+            </thead>
+            <tbody id="meta-body-right" class="text-white divide-y divide-[#3d4d5c]"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Main preview (right) -->
