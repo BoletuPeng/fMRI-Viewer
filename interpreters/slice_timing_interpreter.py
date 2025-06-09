@@ -6,13 +6,13 @@ import numpy as np
 
 def interpret_slice_timing(timing_context: Dict[str, Any]) -> Dict[str, str]:
     """
-    解读多厂商slice timing信息
+    解读多厂商slice timing信息，返回索引而非文字
     
     参数:
         timing_context: 包含厂商、设备、序列类型和各种timing标签的上下文字典
         
     返回:
-        Dict[str, str]: 解读结果字典，包含采集顺序和模式分析
+        Dict[str, str]: 解读结果字典，包含采集顺序和模式分析（键为索引）
     """
     manufacturer = str(timing_context.get("manufacturer", "")).upper()
     
@@ -24,7 +24,7 @@ def interpret_slice_timing(timing_context: Dict[str, Any]) -> Dict[str, str]:
     elif "PHILIPS" in manufacturer:
         return _interpret_philips_timing(timing_context)
     else:
-        return {"Slice Timing": "Unsupported manufacturer"}
+        return {"META_SLICE_TIMING": "MSG_UNSUPPORTED_MANUFACTURER"}
 
 
 def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
@@ -36,18 +36,18 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
         frame_acq_time = context.get("frame_acquisition_time")
         if frame_acq_time:
             return {
-                "Slice Timing Available": "Yes (Frame Acquisition Time)",
-                "Slice Timing Source": "Public tag (0018,9074)",
-                "Note": "Using frame acquisition time instead of MosaicRefAcqTimes"
+                "META_SLICE_TIMING_AVAILABLE": "VALUE_YES (Frame Acquisition Time)",
+                "META_SLICE_TIMING_SOURCE": "Public tag (0018,9074)",
+                "META_NOTE": "MSG_USING_FRAME_ACQ_TIME"
             }
-        return {"Slice Timing Available": "No", "Slice Timing Note": "Siemens timing tags not found"}
+        return {"META_SLICE_TIMING_AVAILABLE": "VALUE_NO", "META_SLICE_TIMING_NOTE": "MSG_SIEMENS_TIMING_NOT_FOUND"}
     
     try:
         # 提取采集顺序
         acquisition_order = _extract_acquisition_order(timing_info)
         
         if not acquisition_order:
-            return {"Slice Timing Available": "Error", "Slice Timing Error": "Failed to parse timing data"}
+            return {"META_SLICE_TIMING_AVAILABLE": "VALUE_ERROR", "META_SLICE_TIMING_ERROR": "MSG_FAILED_TO_PARSE"}
         
         # 将采集顺序转换为类MATLAB表达式
         matlab_expression = _convert_to_matlab_expression(acquisition_order)
@@ -58,17 +58,17 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
         
         # 构建返回结果
         results = {
-            "Slice Timing Available": "Yes",
-            "Slice Timing Source": "Siemens MosaicRefAcqTimes (0019,1029)",
-            "Number of Slices": str(len(acquisition_order)),
-            "Acquisition Order": matlab_expression,
-            "Image Type": "Mosaic" if is_mosaic else "Standard",
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_YES",
+            "META_SLICE_TIMING_SOURCE": "Siemens MosaicRefAcqTimes (0019,1029)",
+            "META_NUMBER_OF_SLICES": str(len(acquisition_order)),
+            "META_ACQUISITION_ORDER": matlab_expression,
+            "META_IMAGE_TYPE": "VALUE_MOSAIC" if is_mosaic else "VALUE_STANDARD",
         }
         
         # 如果有timing范围信息
         if '_last_timing_range' in globals():
             min_t, max_t = _last_timing_range
-            results["Timing Range (ms)"] = f"{min_t:.1f} - {max_t:.1f}"
+            results["META_TIMING_RANGE_MS"] = f"{min_t:.1f} - {max_t:.1f}"
             
             # 计算slice间隔（如果有TR信息）
             if context.get("tr"):
@@ -76,7 +76,7 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
                     tr = float(context["tr"])
                     n_slices = len(acquisition_order)
                     estimated_slice_interval = tr / n_slices
-                    results["Estimated Slice Interval (ms)"] = f"{estimated_slice_interval:.1f}"
+                    results["META_ESTIMATED_SLICE_INTERVAL_MS"] = f"{estimated_slice_interval:.1f}"
                 except:
                     pass
         
@@ -84,8 +84,8 @@ def _interpret_siemens_timing(context: Dict[str, Any]) -> Dict[str, str]:
         
     except Exception as e:
         return {
-            "Slice Timing Available": "Error",
-            "Slice Timing Error": f"Siemens parsing error: {str(e)}"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_ERROR",
+            "META_SLICE_TIMING_ERROR": f"MSG_SIEMENS_PARSING_ERROR: {str(e)}"
         }
 
 
@@ -98,30 +98,30 @@ def _interpret_ge_timing(context: Dict[str, Any]) -> Dict[str, str]:
     
     if trigger_time is not None:
         return {
-            "Slice Timing Available": "Yes",
-            "Slice Timing Source": "GE Trigger Time (0018,1060)",
-            "Trigger Time": str(trigger_time),
-            "Note": "Slice timing can be calculated from trigger times"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_YES",
+            "META_SLICE_TIMING_SOURCE": "GE Trigger Time (0018,1060)",
+            "META_TRIGGER_TIME": str(trigger_time),
+            "META_NOTE": "MSG_SLICE_TIMING_CALCULATED"
         }
     elif rtia_timer is not None:
         return {
-            "Slice Timing Available": "Yes",
-            "Slice Timing Source": "GE RTIA Timer (0021,105E)",
-            "RTIA Timer": str(rtia_timer),
-            "Note": "Using RTIA timer for slice timing"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_YES",
+            "META_SLICE_TIMING_SOURCE": "GE RTIA Timer (0021,105E)",
+            "META_RTIA_TIMER": str(rtia_timer),
+            "META_NOTE": "MSG_USING_RTIA_TIMER"
         }
     elif protocol_block is not None:
         # Protocol block通常只包含采集顺序（顺序或交错），不包含精确时间
         return {
-            "Slice Timing Available": "Partial",
-            "Slice Timing Source": "GE Protocol Data Block (0025,101B)",
-            "Note": "Only acquisition order available (sequential/interleaved), no precise timing",
-            "Warning": "Timing estimation assumes continuous acquisition (TA ≈ TR)"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_PARTIAL",
+            "META_SLICE_TIMING_SOURCE": "GE Protocol Data Block (0025,101B)",
+            "META_NOTE": "MSG_ONLY_ACQ_ORDER",
+            "META_WARNING": "MSG_TIMING_ESTIMATION"
         }
     else:
         return {
-            "Slice Timing Available": "No",
-            "Slice Timing Note": "GE timing information not found in standard tags"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_NO",
+            "META_SLICE_TIMING_NOTE": "MSG_GE_TIMING_NOT_FOUND"
         }
 
 
@@ -133,21 +133,21 @@ def _interpret_philips_timing(context: Dict[str, Any]) -> Dict[str, str]:
     
     if temporal_pos is not None:
         return {
-            "Slice Timing Available": "Partial",
-            "Slice Timing Source": "Philips Temporal Position (0020,0100)",
-            "Note": "Limited timing information available"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_PARTIAL",
+            "META_SLICE_TIMING_SOURCE": "Philips Temporal Position (0020,0100)",
+            "META_NOTE": "MSG_LIMITED_TIMING_INFO"
         }
     elif frame_time is not None:
         return {
-            "Slice Timing Available": "Partial",
-            "Slice Timing Source": "Frame Acquisition Time (0018,9074)",
-            "Note": "Using frame acquisition time"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_PARTIAL",
+            "META_SLICE_TIMING_SOURCE": "Frame Acquisition Time (0018,9074)",
+            "META_NOTE": "MSG_USING_FRAME_ACQ_TIME_GENERIC"
         }
     else:
         return {
-            "Slice Timing Available": "No",
-            "Slice Timing Note": "Philips typically does not store slice timing in DICOM headers",
-            "Recommendation": "Check scanner console or protocol documentation"
+            "META_SLICE_TIMING_AVAILABLE": "VALUE_NO",
+            "META_SLICE_TIMING_NOTE": "MSG_PHILIPS_NO_TIMING",
+            "META_RECOMMENDATION": "MSG_CHECK_CONSOLE"
         }
 
 

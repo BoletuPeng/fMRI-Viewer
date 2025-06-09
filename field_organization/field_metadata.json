@@ -1,0 +1,250 @@
+{
+  "fields": [
+    {
+      "index": "META_FILE_NAME",
+      "tag": "file_name",
+      "category": "FILE_INFO",
+      "priority": 1,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_TRANSFER_SYNTAX_UID",
+      "tag": ["file_meta", "TransferSyntaxUID"],
+      "category": "FILE_INFO", 
+      "priority": 2,
+      "interpret_mode": "Specific"
+    },
+    
+    {
+      "index": "META_PATIENT_NAME",
+      "tag": [16, 16],
+      "category": "PATIENT_INFO",
+      "priority": 1,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_PATIENT_ID",
+      "tag": [16, 32],
+      "category": "PATIENT_INFO",
+      "priority": 2,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_SEX",
+      "tag": [16, 64],
+      "category": "PATIENT_INFO",
+      "priority": 3,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_AGE",
+      "tag": [16, 4112],
+      "category": "PATIENT_INFO",
+      "priority": 4,
+      "interpret_mode": "Specific"
+    },
+    
+    {
+      "index": "META_INSTITUTION",
+      "tag": [8, 128],
+      "category": "INSTITUTION_EQUIPMENT",
+      "priority": 1,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_STATION_NAME",
+      "tag": [8, 4112],
+      "category": "INSTITUTION_EQUIPMENT",
+      "priority": 2,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_MANUFACTURER",
+      "tag": [8, 112],
+      "category": "INSTITUTION_EQUIPMENT",
+      "priority": 3,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_DEVICE_MODEL",
+      "tag": [8, 4240],
+      "category": "INSTITUTION_EQUIPMENT",
+      "priority": 4,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_MAGNETIC_FIELD_STRENGTH",
+      "tag": [24, 135],
+      "category": "INSTITUTION_EQUIPMENT",
+      "priority": 5,
+      "interpret_mode": "Specific"
+    },
+    
+    {
+      "index": "META_STUDY_DATE",
+      "tag": [8, 32],
+      "category": "STUDY_INFO",
+      "priority": 1,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_STUDY_TIME",
+      "tag": [8, 48],
+      "category": "STUDY_INFO",
+      "priority": 2,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_MODALITY",
+      "tag": [8, 96],
+      "category": "STUDY_INFO",
+      "priority": 3,
+      "interpret_mode": "Naive"
+    },
+    
+    {
+      "index": "META_SERIES_DESCRIPTION",
+      "tag": [8, 4158],
+      "category": "SEQUENCE_INFO",
+      "priority": 1,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_PROTOCOL_NAME",
+      "tag": [24, 4144],
+      "category": "SEQUENCE_INFO",
+      "priority": 2,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_SCANNING_SEQUENCE",
+      "tag": [24, 32],
+      "category": "SEQUENCE_INFO",
+      "priority": 3,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_SEQUENCE_VARIANT",
+      "tag": [24, 33],
+      "category": "SEQUENCE_INFO",
+      "priority": 4,
+      "interpret_mode": "Naive"
+    },
+    {
+      "index": "META_IMAGE_TYPE",
+      "tag": [8, 8],
+      "category": "SEQUENCE_INFO",
+      "priority": 5,
+      "interpret_mode": "Naive"
+    },
+    
+    {
+      "index": "META_TR_MS",
+      "tag": [24, 128],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 1,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_TE_MS",
+      "tag": [24, 129],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 2,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_TI_MS",
+      "tag": [24, 130],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 3,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_FLIP_ANGLE",
+      "tag": [24, 4884],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 4,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_ECHO_TRAIN_LENGTH",
+      "tag": [24, 145],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 5,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_NUMBER_OF_AVERAGES",
+      "tag": [24, 131],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 6,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_PIXEL_BANDWIDTH",
+      "tag": [24, 149],
+      "category": "ACQUISITION_PARAMS",
+      "priority": 7,
+      "interpret_mode": "Specific"
+    },
+    
+    {
+      "index": "META_ROWS_COLUMNS",
+      "tag": ["Rows", "Columns"],
+      "category": "IMAGE_GEOMETRY",
+      "priority": 1,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_SLICE_THICKNESS",
+      "tag": [24, 80],
+      "category": "IMAGE_GEOMETRY",
+      "priority": 2,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_SLICE_SPACING",
+      "tag": [24, 136],
+      "category": "IMAGE_GEOMETRY",
+      "priority": 3,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_PIXEL_SPACING",
+      "tag": [40, 48],
+      "category": "IMAGE_GEOMETRY",
+      "priority": 4,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_ACQUISITION_MATRIX",
+      "tag": [24, 4880],
+      "category": "IMAGE_GEOMETRY",
+      "priority": 5,
+      "interpret_mode": "Specific"
+    },
+    
+    {
+      "index": "META_BITS_STORED",
+      "tag": [40, 257],
+      "category": "IMAGE_ENCODING",
+      "priority": 1,
+      "interpret_mode": "Specific"
+    },
+    {
+      "index": "META_PHOTOMETRIC_INTERPRETATION",
+      "tag": [40, 4],
+      "category": "IMAGE_ENCODING",
+      "priority": 2,
+      "interpret_mode": "Naive"
+    },
+    
+    {
+      "index": "META_SLICE_TIMING",
+      "tag": "slice_timing_context",
+      "category": "SLICE_TIMING",
+      "priority": 1,
+      "interpret_mode": "Specific"
+    }
+  ]
+}

@@ -12,6 +12,23 @@
   <style>
     /* Selected thumbnail border */
     .thumb-selected{outline:2px solid #4f9cff;outline-offset:2px}
+    
+    /* Modal backdrop */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+    }
+    
+    /* Modal animations */
+    .modal-enter{opacity:0;transform:scale(0.95)}
+    .modal-enter-active{transition:all 0.2s ease-out;opacity:1;transform:scale(1)}
+    .modal-exit{opacity:1;transform:scale(1)}
+    .modal-exit-active{transition:all 0.15s ease-in;opacity:0;transform:scale(0.95)}
   </style>
 </head>
 <body class="bg-[#141a1f] min-h-screen font-[Inter,_'Noto_Sans',sans-serif]">
@@ -20,18 +37,21 @@
     <header class="flex items-center justify-between border-b border-[#2b3640] px-10 py-3 text-white">
       <div class="flex items-center gap-4">
         <div class="size-4"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M47.24 24 24 47.24.76 24 24 .76 47.24 24ZM12.24 21h23.52L24 9.24 12.24 21Z"/></svg></div>
-        <h2 class="text-lg font-bold tracking-tight">MRI Photo Manager</h2>
+        <h2 id="app-title" class="text-lg font-bold tracking-tight">MRI Photo Manager</h2>
       </div>
-      <!-- Import buttons -->
+      <!-- Import and Settings buttons -->
       <div class="flex gap-3">
         <label class="relative h-10 cursor-pointer rounded-full bg-[#2b3640] px-4 text-sm font-bold leading-10 text-white">
-          Import File
+          <span id="import-file-label">Import File</span>
           <input id="file-input" type="file" accept=".dcm,.DCM" multiple class="absolute inset-0 opacity-0 cursor-pointer" />
         </label>
         <label class="relative h-10 cursor-pointer rounded-full bg-[#2b3640] px-4 text-sm font-bold leading-10 text-white">
-          Import Folder
+          <span id="import-folder-label">Import Folder</span>
           <input id="folder-input" type="file" accept=".dcm,.DCM" multiple webkitdirectory directory class="absolute inset-0 opacity-0 cursor-pointer" />
         </label>
+        <button id="settings-btn" class="h-10 rounded-full bg-[#2b3640] px-4 text-sm font-bold text-white hover:bg-[#3d4d5c] transition-colors">
+          <span id="settings-label">Settings</span>
+        </button>
       </div>
     </header>
 
@@ -43,7 +63,10 @@
           <!-- Left column table -->
           <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
             <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
-              <tr><th class="w-40 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
+              <tr>
+                <th id="attr-header-left" class="w-40 px-4 py-3 text-left font-medium">Attribute</th>
+                <th id="value-header-left" class="px-4 py-3 text-left font-medium">Value</th>
+              </tr>
             </thead>
             <tbody id="meta-body-left" class="text-white divide-y divide-[#3d4d5c]"></tbody>
           </table>
@@ -51,7 +74,10 @@
           <!-- Right column table -->
           <table class="w-full overflow-hidden rounded-xl border border-[#3d4d5c] bg-[#141a1f] text-sm">
             <thead class="bg-[#1f272e] text-white sticky top-0 z-10">
-              <tr><th class="w-40 px-4 py-3 text-left font-medium">Attribute</th><th class="px-4 py-3 text-left font-medium">Value</th></tr>
+              <tr>
+                <th id="attr-header-right" class="w-40 px-4 py-3 text-left font-medium">Attribute</th>
+                <th id="value-header-right" class="px-4 py-3 text-left font-medium">Value</th>
+              </tr>
             </thead>
             <tbody id="meta-body-right" class="text-white divide-y divide-[#3d4d5c]"></tbody>
           </table>
@@ -70,6 +96,46 @@
     <!-- Bottom thumbnail strip -->
     <div id="thumb-strip-wrapper" class="border-t border-[#2b3640]">
       <div id="thumb-strip" class="flex gap-2 overflow-x-auto px-6 py-3" style="scrollbar-width:thin;"></div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-backdrop hidden">
+    <div class="modal-content bg-[#1f272e] rounded-xl p-6 w-96 max-w-[90vw] border border-[#3d4d5c]">
+      <h3 id="settings-title" class="text-xl font-bold text-white mb-6">Settings</h3>
+      
+      <div class="space-y-4">
+        <!-- Placeholder Option 1 -->
+        <div class="flex items-center justify-between">
+          <label id="option1-label" class="text-sm text-[#9daebe]">Option 1</label>
+          <input type="checkbox" class="rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0">
+        </div>
+        
+        <!-- Placeholder Option 2 -->
+        <div class="flex items-center justify-between">
+          <label id="option2-label" class="text-sm text-[#9daebe]">Option 2</label>
+          <input type="checkbox" class="rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0">
+        </div>
+        
+        <!-- Language Selection -->
+        <div class="flex items-center justify-between">
+          <label id="language-label" class="text-sm text-[#9daebe]">Language</label>
+          <select id="language-select" class="rounded bg-[#2b3640] border-[#3d4d5c] text-white text-sm px-3 py-1.5 focus:ring-[#4f9cff] focus:border-[#4f9cff]">
+            <option value="english">English</option>
+            <option value="chinese_simplified">简体中文</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Modal Actions -->
+      <div class="flex justify-end gap-3 mt-6">
+        <button id="settings-cancel" class="px-4 py-2 text-sm text-[#9daebe] hover:text-white transition-colors">
+          <span id="cancel-label">Cancel</span>
+        </button>
+        <button id="settings-save" class="px-4 py-2 text-sm bg-[#4f9cff] text-white rounded-lg hover:bg-[#3d8fff] transition-colors">
+          <span id="save-label">Save</span>
+        </button>
+      </div>
     </div>
   </div>
 </body>
