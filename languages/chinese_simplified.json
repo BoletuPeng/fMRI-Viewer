@@ -12,6 +12,10 @@
   "UI_CANCEL": "取消",
   "UI_SAVE": "保存",
   "UI_REMOVE": "移除",
+  "UI_FILTER_SETTINGS": "过滤器设定",
+  "UI_OK": "确定",
+  "UI_SELECT_ALL": "全选",
+  "UI_DESELECT_ALL": "取消全选",
   
   "CATEGORY_FILE_INFO": "文件信息",
   "CATEGORY_PATIENT_INFO": "患者信息",

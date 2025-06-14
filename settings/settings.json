@@ -1,0 +1,52 @@
+{
+  "language": "chinese_simplified",
+  "filter_settings": {
+    "categories": {
+      "ACQUISITION_PARAMS": true,
+      "FILE_INFO": true,
+      "IMAGE_ENCODING": true,
+      "IMAGE_GEOMETRY": true,
+      "INSTITUTION_EQUIPMENT": true,
+      "PATIENT_INFO": true,
+      "SEQUENCE_INFO": true,
+      "SLICE_TIMING": true,
+      "STUDY_INFO": true
+    },
+    "fields": {
+      "META_FILE_NAME": true,
+      "META_TRANSFER_SYNTAX_UID": true,
+      "META_PATIENT_NAME": true,
+      "META_PATIENT_ID": true,
+      "META_SEX": true,
+      "META_AGE": true,
+      "META_INSTITUTION": true,
+      "META_STATION_NAME": true,
+      "META_MANUFACTURER": true,
+      "META_DEVICE_MODEL": true,
+      "META_MAGNETIC_FIELD_STRENGTH": true,
+      "META_STUDY_DATE": true,
+      "META_STUDY_TIME": true,
+      "META_MODALITY": true,
+      "META_SERIES_DESCRIPTION": true,
+      "META_PROTOCOL_NAME": true,
+      "META_SCANNING_SEQUENCE": true,
+      "META_SEQUENCE_VARIANT": true,
+      "META_IMAGE_TYPE": true,
+      "META_TR_MS": true,
+      "META_TE_MS": true,
+      "META_TI_MS": true,
+      "META_FLIP_ANGLE": true,
+      "META_ECHO_TRAIN_LENGTH": true,
+      "META_NUMBER_OF_AVERAGES": true,
+      "META_PIXEL_BANDWIDTH": true,
+      "META_ROWS_COLUMNS": true,
+      "META_SLICE_THICKNESS": true,
+      "META_SLICE_SPACING": true,
+      "META_PIXEL_SPACING": true,
+      "META_ACQUISITION_MATRIX": true,
+      "META_BITS_STORED": true,
+      "META_PHOTOMETRIC_INTERPRETATION": true,
+      "META_SLICE_TIMING": true
+    }
+  }
+}

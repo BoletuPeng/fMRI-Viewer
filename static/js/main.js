@@ -15,49 +15,61 @@ const settingsModal = document.getElementById("settings-modal");
 const settingsCancel = document.getElementById("settings-cancel");
 const settingsSave = document.getElementById("settings-save");
 const languageSelect = document.getElementById("language-select");
+const filterSettingsBtn = document.getElementById("filter-settings-btn");
 
-// Show settings modal
-settingsBtn.addEventListener("click", () => {
-  settingsModal.classList.remove("hidden");
-  const modalContent = settingsModal.querySelector(".modal-content");
+// ─── Filter Modal ───────────────────────────────────────────────────────────
+const filterModal = document.getElementById("filter-modal");
+const filterContent = document.getElementById("filter-content");
+const filterCancel = document.getElementById("filter-cancel");
+const filterOk = document.getElementById("filter-ok");
+const selectAllBtn = document.getElementById("select-all-btn");
+const deselectAllBtn = document.getElementById("deselect-all-btn");
+
+let filterStructure = {};
+let tempFilterSettings = { categories: {}, fields: {} };
+let expandedCategories = new Set(); // Track which categories are expanded
+
+// ─── Modal Helper Functions ─────────────────────────────────────────────────
+function showModal(modal) {
+  modal.classList.remove("hidden");
+  const modalContent = modal.querySelector(".modal-content");
   modalContent.classList.add("modal-enter");
   
   requestAnimationFrame(() => {
     modalContent.classList.remove("modal-enter");
     modalContent.classList.add("modal-enter-active");
   });
-  
-  // Load current language
-  languageSelect.value = currentLanguage;
-});
+}
 
-// Hide settings modal
-function hideSettingsModal() {
-  const modalContent = settingsModal.querySelector(".modal-content");
+function hideModal(modal) {
+  const modalContent = modal.querySelector(".modal-content");
   modalContent.classList.remove("modal-enter-active");
   modalContent.classList.add("modal-exit-active");
   
   setTimeout(() => {
-    settingsModal.classList.add("hidden");
+    modal.classList.add("hidden");
     modalContent.classList.remove("modal-exit-active");
   }, 150);
 }
 
-settingsCancel.addEventListener("click", hideSettingsModal);
+// ─── Settings Modal Handlers ────────────────────────────────────────────────
+settingsBtn.addEventListener("click", () => {
+  showModal(settingsModal);
+  languageSelect.value = currentLanguage;
+});
 
-// Click outside modal to close
+settingsCancel.addEventListener("click", () => hideModal(settingsModal));
+
 settingsModal.addEventListener("click", (e) => {
   if (e.target === settingsModal) {
-    hideSettingsModal();
+    hideModal(settingsModal);
   }
 });
 
-// Save settings
 settingsSave.addEventListener("click", async () => {
   const newLanguage = languageSelect.value;
   
   if (newLanguage !== currentLanguage) {
-    // Change language
     const response = await fetch(`/api/language/${newLanguage}`, { method: "POST" });
     if (response.ok) {
       currentLanguage = newLanguage;
@@ -70,8 +82,237 @@ settingsSave.addEventListener("click", async () => {
     }
   }
   
-  hideSettingsModal();
+  hideModal(settingsModal);
 });
+
+// ─── Filter Settings Button ─────────────────────────────────────────────────
+filterSettingsBtn.addEventListener("click", async () => {
+  hideModal(settingsModal);
+  await loadFilterSettings();
+  showModal(filterModal);
+});
+
+// ─── Filter Modal Handlers ──────────────────────────────────────────────────
+filterCancel.addEventListener("click", () => hideModal(filterModal));
+
+filterModal.addEventListener("click", (e) => {
+  if (e.target === filterModal) {
+    hideModal(filterModal);
+  }
+});
+
+filterOk.addEventListener("click", async () => {
+  // Save filter settings
+  await fetch("/api/filter/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tempFilterSettings)
+  });
+  
+  hideModal(filterModal);
+  
+  // Refresh current metadata if a file is selected
+  if (currentThumb) {
+    const filename = currentThumb.querySelector("img").title;
+    await loadMetadata(filename);
+  }
+});
+
+selectAllBtn.addEventListener("click", () => {
+  // Set all categories and fields to visible
+  Object.keys(filterStructure).forEach(category => {
+    tempFilterSettings.categories[category] = true;
+    filterStructure[category].fields.forEach(field => {
+      tempFilterSettings.fields[field.index] = true;
+    });
+  });
+  renderFilterContent();
+});
+
+deselectAllBtn.addEventListener("click", () => {
+  // Set all categories and fields to hidden
+  Object.keys(filterStructure).forEach(category => {
+    tempFilterSettings.categories[category] = false;
+    filterStructure[category].fields.forEach(field => {
+      tempFilterSettings.fields[field.index] = false;
+    });
+  });
+  renderFilterContent();
+});
+
+// ─── Filter Settings Functions ──────────────────────────────────────────────
+async function loadFilterSettings() {
+  try {
+    // Load structure
+    const structureResponse = await fetch("/api/filter/structure");
+    filterStructure = await structureResponse.json();
+    
+    // Load current settings
+    const settingsResponse = await fetch("/api/filter/settings");
+    const currentSettings = await settingsResponse.json();
+    
+    // Initialize temp settings
+    tempFilterSettings = {
+      categories: { ...currentSettings.categories },
+      fields: { ...currentSettings.fields }
+    };
+    
+    // Clear expanded categories when opening modal
+    expandedCategories.clear();
+    
+    // Ensure all fields have a setting
+    Object.values(filterStructure).forEach(categoryData => {
+      categoryData.fields.forEach(field => {
+        if (!(field.index in tempFilterSettings.fields)) {
+          tempFilterSettings.fields[field.index] = true;
+        }
+      });
+    });
+    
+    renderFilterContent();
+  } catch (error) {
+    console.error("Error loading filter settings:", error);
+  }
+}
+
+function renderFilterContent() {
+  filterContent.innerHTML = "";
+  
+  Object.entries(filterStructure).forEach(([category, data]) => {
+    // Create category container
+    const categoryDiv = document.createElement("div");
+    categoryDiv.className = "border border-[#3d4d5c] rounded-lg overflow-hidden";
+    
+    // Category header
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "flex items-center gap-2 px-4 py-3 bg-[#2b3640] cursor-pointer hover:bg-[#3d4d5c] transition-colors";
+    
+    // Expand icon
+    const expandIcon = document.createElement("svg");
+    expandIcon.className = "expand-icon w-4 h-4 text-[#9daebe]";
+    expandIcon.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
+    
+    // Category checkbox
+    const categoryCheckbox = document.createElement("input");
+    categoryCheckbox.type = "checkbox";
+    categoryCheckbox.className = "rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0";
+    
+    // Update checkbox state
+    const categoryState = getCategoryState(category, data.fields);
+    if (categoryState === "checked") {
+      categoryCheckbox.checked = true;
+      categoryCheckbox.classList.remove("checkbox-indeterminate");
+    } else if (categoryState === "indeterminate") {
+      categoryCheckbox.checked = true;
+      categoryCheckbox.classList.add("checkbox-indeterminate");
+    } else {
+      categoryCheckbox.checked = false;
+      categoryCheckbox.classList.remove("checkbox-indeterminate");
+    }
+    
+    // Category label
+    const categoryLabel = document.createElement("span");
+    categoryLabel.className = "text-white font-medium flex-1";
+    categoryLabel.textContent = data.name;
+    
+    headerDiv.appendChild(expandIcon);
+    headerDiv.appendChild(categoryCheckbox);
+    headerDiv.appendChild(categoryLabel);
+    
+    // Fields container
+    const fieldsDiv = document.createElement("div");
+    fieldsDiv.className = "bg-[#141a1f] divide-y divide-[#3d4d5c]";
+    
+    // Check if category should be expanded
+    if (expandedCategories.has(category)) {
+      fieldsDiv.classList.remove("hidden");
+      expandIcon.classList.add("expanded");
+    } else {
+      fieldsDiv.classList.add("hidden");
+    }
+    
+    // Add fields
+    data.fields.forEach(field => {
+      const fieldDiv = document.createElement("div");
+      fieldDiv.className = "flex items-center gap-2 px-10 py-2 hover:bg-[#1f272e] transition-colors";
+      
+      const fieldCheckbox = document.createElement("input");
+      fieldCheckbox.type = "checkbox";
+      fieldCheckbox.className = "rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0";
+      fieldCheckbox.checked = tempFilterSettings.fields[field.index] !== false;
+      
+      const fieldLabel = document.createElement("span");
+      fieldLabel.className = "text-[#9daebe] text-sm";
+      fieldLabel.textContent = field.name;
+      
+      fieldDiv.appendChild(fieldCheckbox);
+      fieldDiv.appendChild(fieldLabel);
+      fieldsDiv.appendChild(fieldDiv);
+      
+      // Field checkbox handler
+      fieldCheckbox.addEventListener("change", () => {
+        tempFilterSettings.fields[field.index] = fieldCheckbox.checked;
+        updateCategoryCheckbox(category, data.fields);
+      });
+    });
+    
+    categoryDiv.appendChild(headerDiv);
+    categoryDiv.appendChild(fieldsDiv);
+    filterContent.appendChild(categoryDiv);
+    
+    // Toggle expand/collapse - only when clicking on header but not checkbox
+    headerDiv.addEventListener("click", (e) => {
+      // Check if the click target is the checkbox or its label
+      if (e.target === categoryCheckbox || categoryCheckbox.contains(e.target)) {
+        return;
+      }
+      
+      const isExpanded = !fieldsDiv.classList.contains("hidden");
+      fieldsDiv.classList.toggle("hidden");
+      expandIcon.classList.toggle("expanded", !isExpanded);
+      
+      // Update expanded state tracking
+      if (!isExpanded) {
+        expandedCategories.add(category);
+      } else {
+        expandedCategories.delete(category);
+      }
+    });
+    
+    // Category checkbox handler - prevent event bubbling
+    categoryCheckbox.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+    
+    categoryCheckbox.addEventListener("change", (e) => {
+      e.stopPropagation();
+      
+      const newState = categoryCheckbox.checked;
+      tempFilterSettings.categories[category] = newState;
+      
+      // Update all fields in this category
+      data.fields.forEach(field => {
+        tempFilterSettings.fields[field.index] = newState;
+      });
+      
+      // Re-render to update field checkboxes
+      renderFilterContent();
+    });
+  });
+}
+
+function getCategoryState(category, fields) {
+  const visibleCount = fields.filter(f => tempFilterSettings.fields[f.index] !== false).length;
+  
+  if (visibleCount === 0) return "unchecked";
+  if (visibleCount === fields.length) return "checked";
+  return "indeterminate";
+}
+
+function updateCategoryCheckbox(category, fields) {
+  // Re-render to update the category checkbox state
+  renderFilterContent();
+}
 
 // ─── Language Support ───────────────────────────────────────────────────────
 async function updateUILanguage() {
@@ -93,11 +334,17 @@ async function updateUILanguage() {
     
     // Settings modal
     document.getElementById("settings-title").textContent = translations.UI_SETTINGS_TITLE;
-    document.getElementById("option1-label").textContent = translations.UI_OPTION1;
-    document.getElementById("option2-label").textContent = translations.UI_OPTION2;
+    document.getElementById("filter-settings-label").textContent = translations.UI_FILTER_SETTINGS || "Filter Settings";
     document.getElementById("language-label").textContent = translations.UI_LANGUAGE;
     document.getElementById("cancel-label").textContent = translations.UI_CANCEL;
     document.getElementById("save-label").textContent = translations.UI_SAVE;
+    
+    // Filter modal
+    document.getElementById("filter-title").textContent = translations.UI_FILTER_SETTINGS || "Filter Settings";
+    document.getElementById("select-all-label").textContent = translations.UI_SELECT_ALL || "Select All";
+    document.getElementById("deselect-all-label").textContent = translations.UI_DESELECT_ALL || "Deselect All";
+    document.getElementById("filter-cancel-label").textContent = translations.UI_CANCEL;
+    document.getElementById("filter-ok-label").textContent = translations.UI_OK || "OK";
     
   } catch (error) {
     console.error("Error updating UI language:", error);

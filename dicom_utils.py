@@ -116,9 +116,10 @@ class DicomController:
         }
     
     def _extract_metadata(self) -> List[Dict[str, Any]]:
-        """Extract and interpret metadata based on field structure."""
+        """Extract and interpret metadata based on filtered field structure."""
         if self._metadata is None:
             field_manager = get_field_manager()
+            # Get filtered field structure
             field_structure = field_manager.get_field_structure()
             
             metadata = []
@@ -170,11 +171,13 @@ class DicomController:
     
     def get_metadata(self) -> List[Dict[str, str]]:
         """Get only metadata as ordered list."""
+        # Clear cache to ensure fresh data
+        self._metadata = None
         return self._extract_metadata()
     
     def get_full_data(self) -> Tuple[List[Dict[str, str]], List[np.ndarray]]:
         """Get both metadata and images."""
-        # Clear cache to ensure fresh data with current language
+        # Clear cache to ensure fresh data with current language/filters
         self._metadata = None
         
         metadata = self._extract_metadata()

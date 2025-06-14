@@ -29,6 +29,31 @@
     .modal-enter-active{transition:all 0.2s ease-out;opacity:1;transform:scale(1)}
     .modal-exit{opacity:1;transform:scale(1)}
     .modal-exit-active{transition:all 0.15s ease-in;opacity:0;transform:scale(0.95)}
+    
+    /* Checkbox states */
+    .checkbox-indeterminate{
+      background-color:#4f9cff;
+      border-color:#4f9cff;
+      position:relative;
+    }
+    .checkbox-indeterminate::after{
+      content:'';
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:8px;
+      height:2px;
+      background:white;
+    }
+    
+    /* Expand icon rotation */
+    .expand-icon{
+      transition:transform 0.2s ease;
+    }
+    .expand-icon.expanded{
+      transform:rotate(90deg);
+    }
   </style>
 </head>
 <body class="bg-[#141a1f] min-h-screen font-[Inter,_'Noto_Sans',sans-serif]">
@@ -105,16 +130,12 @@
       <h3 id="settings-title" class="text-xl font-bold text-white mb-6">Settings</h3>
       
       <div class="space-y-4">
-        <!-- Placeholder Option 1 -->
+        <!-- Filter Settings Button -->
         <div class="flex items-center justify-between">
-          <label id="option1-label" class="text-sm text-[#9daebe]">Option 1</label>
-          <input type="checkbox" class="rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0">
-        </div>
-        
-        <!-- Placeholder Option 2 -->
-        <div class="flex items-center justify-between">
-          <label id="option2-label" class="text-sm text-[#9daebe]">Option 2</label>
-          <input type="checkbox" class="rounded bg-[#2b3640] border-[#3d4d5c] text-[#4f9cff] focus:ring-[#4f9cff] focus:ring-offset-0">
+          <label id="filter-settings-label" class="text-sm text-[#9daebe]">Filter Settings</label>
+          <button id="filter-settings-btn" class="px-4 py-1.5 text-sm bg-[#2b3640] text-white rounded-lg hover:bg-[#3d4d5c] transition-colors">
+            Configure
+          </button>
         </div>
         
         <!-- Language Selection -->
@@ -134,6 +155,40 @@
         </button>
         <button id="settings-save" class="px-4 py-2 text-sm bg-[#4f9cff] text-white rounded-lg hover:bg-[#3d8fff] transition-colors">
           <span id="save-label">Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Settings Modal -->
+  <div id="filter-modal" class="modal-backdrop hidden">
+    <div class="modal-content bg-[#1f272e] rounded-xl p-6 w-[600px] max-w-[90vw] max-h-[80vh] border border-[#3d4d5c] flex flex-col">
+      <h3 id="filter-title" class="text-xl font-bold text-white mb-4">Filter Settings</h3>
+      
+      <!-- Controls -->
+      <div class="flex justify-between mb-4">
+        <div class="flex gap-2">
+          <button id="select-all-btn" class="px-3 py-1 text-sm bg-[#2b3640] text-white rounded hover:bg-[#3d4d5c] transition-colors">
+            <span id="select-all-label">Select All</span>
+          </button>
+          <button id="deselect-all-btn" class="px-3 py-1 text-sm bg-[#2b3640] text-white rounded hover:bg-[#3d4d5c] transition-colors">
+            <span id="deselect-all-label">Deselect All</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Filter content -->
+      <div id="filter-content" class="flex-1 overflow-y-auto space-y-2 pr-2">
+        <!-- Categories and fields will be populated here -->
+      </div>
+      
+      <!-- Modal Actions -->
+      <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-[#3d4d5c]">
+        <button id="filter-cancel" class="px-4 py-2 text-sm text-[#9daebe] hover:text-white transition-colors">
+          <span id="filter-cancel-label">Cancel</span>
+        </button>
+        <button id="filter-ok" class="px-4 py-2 text-sm bg-[#4f9cff] text-white rounded-lg hover:bg-[#3d8fff] transition-colors">
+          <span id="filter-ok-label">OK</span>
         </button>
       </div>
     </div>

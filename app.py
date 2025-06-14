@@ -10,6 +10,7 @@ import numpy as np
 
 from dicom_utils import DicomController, load_dicom_images
 from field_organization import get_field_manager
+from settings import get_settings_manager
 
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_DIR = BASE_DIR / "cache"
@@ -19,10 +20,15 @@ CACHE_DIR.mkdir(exist_ok=True)
 LANG_DIR = BASE_DIR / "languages"
 LANG_DIR.mkdir(exist_ok=True)
 
+# Create settings directory
+SETTINGS_DIR = BASE_DIR / "settings"
+SETTINGS_DIR.mkdir(exist_ok=True)
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
-# Initialize field manager on startup
+# Initialize managers on startup
 field_manager = get_field_manager()
+settings_manager = get_settings_manager()
 
 # ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -138,8 +144,7 @@ def import_files():
 @app.route("/api/language/<lang>", methods=["POST"])
 def set_language(lang):
     """Set language."""
-    global field_manager
-    field_manager.set_language(lang)
+    settings_manager.language = lang
     return jsonify({"status": "ok", "language": lang})
 
 
@@ -147,7 +152,7 @@ def set_language(lang):
 def get_language():
     """Get current language."""
     return jsonify({
-        "current": field_manager.current_language,
+        "current": settings_manager.language,
         "available": ["english", "chinese_simplified"]  # Hardcoded for now
     })
 
@@ -158,11 +163,58 @@ def get_translations():
     ui_keys = [
         "UI_APP_TITLE", "UI_IMPORT_FILE", "UI_IMPORT_FOLDER", "UI_SETTINGS",
         "UI_ATTRIBUTE", "UI_VALUE", "UI_SETTINGS_TITLE", "UI_OPTION1", "UI_OPTION2",
-        "UI_LANGUAGE", "UI_CANCEL", "UI_SAVE", "UI_REMOVE"
+        "UI_LANGUAGE", "UI_CANCEL", "UI_SAVE", "UI_REMOVE", "UI_FILTER_SETTINGS",
+        "UI_OK", "UI_SELECT_ALL", "UI_DESELECT_ALL"
     ]
     
+    # Get fresh translations from field manager
+    field_manager = get_field_manager()
     translations = {key: field_manager.translations.get(key, key) for key in ui_keys}
     return jsonify(translations)
+
+
+@app.route("/api/filter/structure", methods=["GET"])
+def get_filter_structure():
+    """Get category and field structure for filter settings."""
+    field_manager = get_field_manager()
+    structure = field_manager.get_categories_with_fields()
+    
+    # Add visibility state from settings
+    for category, data in structure.items():
+        # Get category state
+        field_indices = [f["index"] for f in data["fields"]]
+        state = settings_manager.filter_settings.get_category_state(category, field_indices)
+        data["state"] = state
+        
+        # Get field states
+        for field in data["fields"]:
+            field["visible"] = settings_manager.is_field_visible(field["index"])
+    
+    return jsonify(structure)
+
+
+@app.route("/api/filter/settings", methods=["GET"])
+def get_filter_settings():
+    """Get current filter settings."""
+    return jsonify({
+        "categories": settings_manager.filter_settings.categories,
+        "fields": settings_manager.filter_settings.fields
+    })
+
+
+@app.route("/api/filter/settings", methods=["POST"])
+def update_filter_settings():
+    """Update filter settings."""
+    data = request.json
+    categories = data.get("categories", {})
+    fields = data.get("fields", {})
+    
+    settings_manager.update_filter_settings(categories, fields)
+    
+    # Notify field manager to update filtered definitions
+    field_manager.notify_filter_update()
+    
+    return jsonify({"status": "ok"})
 
 
 if __name__ == "__main__":

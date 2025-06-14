@@ -12,6 +12,10 @@
   "UI_CANCEL": "Cancel",
   "UI_SAVE": "Save",
   "UI_REMOVE": "Remove",
+  "UI_FILTER_SETTINGS": "Filter Settings",
+  "UI_OK": "OK",
+  "UI_SELECT_ALL": "Select All",
+  "UI_DESELECT_ALL": "Deselect All",
   
   "CATEGORY_FILE_INFO": "File Information",
   "CATEGORY_PATIENT_INFO": "Patient Information",
